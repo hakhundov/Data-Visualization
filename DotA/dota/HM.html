@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DotA HeatMap</title>
+    <meta charset="utf-8">
+  <!--  <link href=bootstrap-3.1.1-dist/css/bootstrap.css rel=stylesheet media="screen">
+  -->
+</head>
+<style>
+
+    .axis text {
+        font: 10px sans-serif;
+    }
+
+    .axis path,
+    .axis line {
+        fill: none;
+        stroke: #000;
+    }
+
+</style>
+
+<body>
+
+<form id="filterForm">
+    <fieldset>
+    <table>
+        <tr>
+            <td>
+                <input type="radio" name="filter" value="normal" checked="checked" />
+            </td>
+            <td>
+                <label>Normal</label>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <input type="radio" name="filter" value="median" />
+            </td>
+            <td>
+                <label>4x4 Median Filtered</label>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <input type="radio" name="filter" value="canny" />
+            </td>
+            <td>
+                <label>Canny Edge Algorithm</label>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <select id = "tier">
+                    <option value="all">All</option>
+                    <option value="pro">Pro</option>
+                    <option value="veryhigh">Very High</option>
+                    <option value="high">High</option>
+                    <option value="normal">Normal</option>
+                </select>
+            </td>
+            <td>
+                <label>Tier</label>
+            </td>
+        </tr>
+    </table>
+    </fieldset>
+
+</form>
+<div class="row">
+    <div class="col-md-4" id ="svgArea"></div>
+</div>
+
+<script src="D3/D3.js"></script>
+
+
+<script>
+    // Creates your margin and size of your canvas
+    var margin = {top: 30, right: 30, bottom: 30, left: 30};
+    var width = 600,
+            height = 600;
+
+
+    // In order for the margins to work we need to append a "g" (graphic) element to our svg
+    var svg = d3.select("#svgArea").append("svg")
+            .attr("width", width+50)
+            .attr("height", height+150)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    var xS = d3.scale.linear().range([0, width - margin.right]);
+    var yS = d3.scale.linear().range([height - margin.bottom, 0]);
+
+
+    var xAxis = d3.svg.axis()
+            .scale(xS)
+            .orient("bottom");
+
+    var yAxis = d3.svg.axis()
+            .scale(yS)
+            .orient("left")
+            //.ticks(10);
+
+    var color = d3.scale.ordinal().range([  "#fff5eb","#fee6ce", "#fdd0a2",
+                                            "#fdae6b","#fd8d3c", "#f16913",
+                                            "#d94801", "#a63603", "#7f2704" ]);
+
+        // we add the axis
+        svg.append("g")
+                .attr("class", "x axis")
+                .attr("transform", "translate(0," + (height - margin.bottom) + ")")
+                .call(xAxis);
+
+        svg.append("g")
+                .attr("class", "y axis")
+                .call(yAxis);
+
+    var container = svg.append("g"),
+        dataset;
+
+    var updateMap = function (tier, filter) {
+        if (dataset) {
+            dataset.remove();
+        }
+        d3.csv("HM_"+tier+"_"+filter+".csv", function(error, data){
+            //console.log(data);
+            data.forEach(function(d){
+            //     //Sometimes the numbers are returned as strings, these lines transform those strings are transformed into numbers
+                d.x = parseInt(d.x);
+                d.y = parseInt(d.y);
+                d.v = parseInt(d.v);
+             });
+
+            //console.log(data)
+
+            xS.domain(d3.extent(data, function(d){return d.x;})).nice();
+            yS.domain(d3.extent(data, function(d){return d.y;}))   
+
+            dataset = container.selectAll("rect")
+                    .data(data)
+                    .enter()
+                    .append("rect")
+                    .attr("x", function(d){ return xS(d.x)})
+                    .attr("y", function(d){ return yS(d.y)})
+                    .attr("width",   6 ) 
+                    .attr("height",  6 )
+                    .style("fill",   function(d){ return color(d.v) }) 
+
+                  //  .attr("style", "fill:rgb(0,0,255);stroke-width:3;stroke:rgb(0,0,0)");
+                 //   .attr("fill", red)
+
+                    
+
+                    //.on("mouseover", function(){d3.select(this).style("fill", "green")})
+                    ////.on("mouseout", function(){d3.select(this).style("fill",      function(d){ return color(d.species)}         )});
+
+        });
+    }
+
+    updateMap('all', 'normal');
+    var form = document.getElementById('filterForm');
+    form.onchange = function () {
+        updateMap(form.tier.value, form.filter.value);
+    }
+</script>
+</body>
+</html>
