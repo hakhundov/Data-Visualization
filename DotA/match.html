@@ -43,13 +43,10 @@
             </td>
         </tr>
         <tr>
-            <td>
-                <select id = "player">
-                    <option value="all">All</option>
-                </select>
+            <td id="players">
             </td>
             <td>
-                <label>Match</label>
+                <label>Players</label>
             </td>
         </tr>
     </table>
@@ -112,7 +109,7 @@
         playerMap = {},
         players = 0;
 
-    var updateMap = function (match, player) {
+    var updateMap = function (match, playerFilter) {
         if (dataset) {
             dataset.remove();
         }
@@ -126,23 +123,25 @@
                 d.team = parseInt(d.team);
                 if (playerMap[d.player] == undefined) {
                     playerMap[d.player] = players++;
-                    var node = document.createElement('option');
+                    var node = document.createElement('input');
+                    node.type = 'checkbox';
                     node.value = playerMap[d.player];
-                    node.innerText = d.player;
-                    form.player.appendChild(node);
+//                    node.innerText = d.player;
+                    document.getElementById('players').appendChild(node);
                 }
              });
 
             //console.log(data)
+            //console.log(playerMap);
 
             xS.domain(d3.extent(data, function(d){return d.x;})).nice();
             yS.domain(d3.extent(data, function(d){return d.y;}))   
 
             var filter = function (d) {
-                if (player == 'all') {
+                if (playerFilter == undefined || playerFilter.length == 0) {
                     return 6;
                 }
-                if (player == playerMap[d.player]) {
+                if (playerFilter[playerMap[d.player]]) {
                     return 6;
                 }
                 return 0;
@@ -156,23 +155,22 @@
                     .attr("y", function (d){return yS(d.y)})
                     .attr("width",   filter)
                     .attr("height",  filter)
-                    .style("fill",   function(d){ return d.team == 1 ? '#ff0000' : '#0000ff' }) 
-
-                  //  .attr("style", "fill:rgb(0,0,255);stroke-width:3;stroke:rgb(0,0,0)");
-                 //   .attr("fill", red)
-
-                    
-
-                    //.on("mouseover", function(){d3.select(this).style("fill", "green")})
-                    ////.on("mouseout", function(){d3.select(this).style("fill",      function(d){ return color(d.species)}         )});
+                    .style("fill",   function(d){ return d.team == 1 ? '#ff0000' : '#0000ff' })
 
         });
     }
 
-    updateMap('648283764', 'all');
+    updateMap('648283764', undefined);
     var form = document.getElementById('filterForm');
     form.onchange = function () {
-        updateMap(form.match.value, form.player.value);
+        var players = [];
+        var i;
+        var children = document.getElementById('players').childNodes;
+        for(i = 0; i < children.length; i +=1) {
+            console.log(children[i].value, children[i].checked);
+            players.push(children[i].checked);
+        }
+        updateMap(form.match.value, players);
     }
 </script>
 </body>
