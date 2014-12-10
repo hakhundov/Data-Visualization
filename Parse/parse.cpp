@@ -103,7 +103,7 @@ void write_csv(std::vector<entry_t> &vec, FILE *out, uint matchid) {
 	fprintf(out, "t,x,y,team,player\n");
 	for (i = 0; i < vec.size(); ++i) {
 		if (matchid == 0 || matchid == vec[i].matchid) {
-			fprintf(out, "%u,%u,%u,%c,%s\n", vec[i].tsync, vec[i].x, vec[i].y, vec[i].team, vec[i].player);
+			fprintf(out, "%u,%u,%u,%u,%s\n", vec[i].tsync, vec[i].x, vec[i].y, vec[i].team, vec[i].player);
 		}
 	}
 }

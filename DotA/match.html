@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DotA HeatMap</title>
+    <meta charset="utf-8">
+  <!--  <link href=bootstrap-3.1.1-dist/css/bootstrap.css rel=stylesheet media="screen">
+  -->
+
+    <link href="http://s3.amazonaws.com/codecademy-content/courses/ltp/css/shift.css" rel="stylesheet">
+    <link rel="stylesheet" href="http://s3.amazonaws.com/codecademy-content/courses/ltp/css/bootstrap.css">
+
+
+</head>
+<style>
+
+    .axis text {
+        font: 10px sans-serif;
+    }
+
+    .axis path,
+    .axis line {
+        fill: none;
+        stroke: #000;
+    }
+
+</style>
+
+<body>
+
+<form id="filterForm">
+<div class="nav">
+      <div class="container">
+    <fieldset>
+    <table class="table table-striped">
+        <tr>
+            <td>
+                <select id = "match">
+                    <option value="648283764">Match #1</option>
+                </select>
+            </td>
+            <td>
+                <label>Match</label>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <select id = "player">
+                    <option value="all">All</option>
+                </select>
+            </td>
+            <td>
+                <label>Match</label>
+            </td>
+        </tr>
+    </table>
+    </fieldset>
+
+   </div>
+   </div> 
+
+</form>
+<div class="row">
+    <div class="col-md-4" id ="svgArea"></div>
+</div>
+
+<script src="D3/D3.js"></script>
+
+
+<script>
+    // Creates your margin and size of your canvas
+    var margin = {top: 30, right: 30, bottom: 30, left: 30};
+    var width = 600,
+            height = 600;
+
+
+    // In order for the margins to work we need to append a "g" (graphic) element to our svg
+    var svg = d3.select("#svgArea").append("svg")
+            .attr("width", width+50)
+            .attr("height", height+150)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    var xS = d3.scale.linear().range([0, width - margin.right]);
+    var yS = d3.scale.linear().range([height - margin.bottom, 0]);
+
+
+    var xAxis = d3.svg.axis()
+            .scale(xS)
+            .orient("bottom");
+
+    var yAxis = d3.svg.axis()
+            .scale(yS)
+            .orient("left")
+            //.ticks(10);
+
+    var color = d3.scale.ordinal().range([  "#fff5eb","#fee6ce", "#fdd0a2",
+                                            "#fdae6b","#fd8d3c", "#f16913",
+                                            "#d94801", "#a63603", "#7f2704" ]);
+
+        // we add the axis
+        svg.append("g")
+                .attr("class", "x axis")
+                .attr("transform", "translate(0," + (height - margin.bottom) + ")")
+                .call(xAxis);
+
+        svg.append("g")
+                .attr("class", "y axis")
+                .call(yAxis);
+
+    var container = svg.append("g"),
+        dataset,
+        playerMap = {},
+        players = 0;
+
+    var updateMap = function (match, player) {
+        if (dataset) {
+            dataset.remove();
+        }
+        d3.csv("data/match_"+match+".csv", function(error, data){
+            //console.log(data);
+            data.forEach(function(d) {
+            //     //Sometimes the numbers are returned as strings, these lines transform those strings are transformed into numbers
+                d.t = parseInt(d.t);
+                d.x = parseInt(d.x);
+                d.y = parseInt(d.y);
+                d.team = parseInt(d.team);
+                if (playerMap[d.player] == undefined) {
+                    playerMap[d.player] = players++;
+                    var node = document.createElement('option');
+                    node.value = playerMap[d.player];
+                    node.innerText = d.player;
+                    form.player.appendChild(node);
+                }
+             });
+
+            //console.log(data)
+
+            xS.domain(d3.extent(data, function(d){return d.x;})).nice();
+            yS.domain(d3.extent(data, function(d){return d.y;}))   
+
+            var filter = function (d) {
+                if (player == 'all') {
+                    return 6;
+                }
+                if (player == playerMap[d.player]) {
+                    return 6;
+                }
+                return 0;
+            };
+
+            dataset = container.selectAll("rect")
+                    .data(data)
+                    .enter()
+                    .append("rect")
+                    .attr("x", function (d){return xS(d.x)})
+                    .attr("y", function (d){return yS(d.y)})
+                    .attr("width",   filter)
+                    .attr("height",  filter)
+                    .style("fill",   function(d){ return d.team == 1 ? '#ff0000' : '#0000ff' }) 
+
+                  //  .attr("style", "fill:rgb(0,0,255);stroke-width:3;stroke:rgb(0,0,0)");
+                 //   .attr("fill", red)
+
+                    
+
+                    //.on("mouseover", function(){d3.select(this).style("fill", "green")})
+                    ////.on("mouseout", function(){d3.select(this).style("fill",      function(d){ return color(d.species)}         )});
+
+        });
+    }
+
+    updateMap('648283764', 'all');
+    var form = document.getElementById('filterForm');
+    form.onchange = function () {
+        updateMap(form.match.value, form.player.value);
+    }
+</script>
+</body>
+</html>
