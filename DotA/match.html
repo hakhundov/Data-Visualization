@@ -36,19 +36,23 @@
             <td>
                 <select id = "match">
                     <option value="648283764">Match #1</option>
+                    <option value="569649581">Match #2</option>
                 </select>
             </td>
             <td>
                 <label>Match</label>
             </td>
         </tr>
-        <tr>
-            <td id="players">
-            </td>
-            <td>
-                <label>Players</label>
-            </td>
-        </tr>
+        <tr><td><input id="p0" value="0" type="checkbox"></input></td><td><label id="lp0">Player #1</label></td></tr>
+        <tr><td><input id="p1" value="1" type="checkbox"></input></td><td><label id="lp1">Player #2</label></td></tr>
+        <tr><td><input id="p2" value="2" type="checkbox"></input></td><td><label id="lp2">Player #3</label></td></tr>
+        <tr><td><input id="p3" value="3" type="checkbox"></input></td><td><label id="lp3">Player #4</label></td></tr>
+        <tr><td><input id="p4" value="4" type="checkbox"></input></td><td><label id="lp4">Player #5</label></td></tr>
+        <tr><td><input id="p5" value="5" type="checkbox"></input></td><td><label id="lp5">Player #6</label></td></tr>
+        <tr><td><input id="p6" value="6" type="checkbox"></input></td><td><label id="lp6">Player #7</label></td></tr>
+        <tr><td><input id="p7" value="7" type="checkbox"></input></td><td><label id="lp7">Player #8</label></td></tr>
+        <tr><td><input id="p8" value="8" type="checkbox"></input></td><td><label id="lp8">Player #9</label></td></tr>
+        <tr><td><input id="p9" value="9" type="checkbox"></input></td><td><label id="lp9">Player #10</label></td></tr>
     </table>
     </fieldset>
 
@@ -105,14 +109,15 @@
                 .call(yAxis);
 
     var container = svg.append("g"),
-        dataset,
-        playerMap = {},
-        players = 0;
+        dataset;
 
     var updateMap = function (match, playerFilter) {
+        var playerMap = {},
+            players = 0;
         if (dataset) {
             dataset.remove();
         }
+        var playerNodes = document.getElementById('players');
         d3.csv("data/match_"+match+".csv", function(error, data){
             //console.log(data);
             data.forEach(function(d) {
@@ -122,12 +127,8 @@
                 d.y = parseInt(d.y);
                 d.team = parseInt(d.team);
                 if (playerMap[d.player] == undefined) {
+                    document.getElementById('lp' + players).innerText = d.player;
                     playerMap[d.player] = players++;
-                    var node = document.createElement('input');
-                    node.type = 'checkbox';
-                    node.value = playerMap[d.player];
-//                    node.innerText = d.player;
-                    document.getElementById('players').appendChild(node);
                 }
              });
 
@@ -160,17 +161,20 @@
         });
     }
 
-    updateMap('648283764', undefined);
+    updateMap('648283764', []);
     var form = document.getElementById('filterForm');
     form.onchange = function () {
         var players = [];
         var i;
-        var children = document.getElementById('players').childNodes;
-        for(i = 0; i < children.length; i +=1) {
-            console.log(children[i].value, children[i].checked);
-            players.push(children[i].checked);
+        var empty = true;
+        for(i = 0; i < 10; i +=1) {
+            var node = document.getElementById('p' + i);
+            players.push(node.checked);
+            if (node.checked) {
+                empty = false;
+            }
         }
-        updateMap(form.match.value, players);
+        updateMap(form.match.value, empty ? undefined : players);
     }
 </script>
 </body>
