@@ -1,34 +1,40 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>DotA HeatMap</title>
-    <meta charset="utf-8">
-  <!--  <link href=bootstrap-3.1.1-dist/css/bootstrap.css rel=stylesheet media="screen">
-  -->
-     <link href="http://s3.amazonaws.com/codecademy-content/courses/ltp/css/shift.css" rel="stylesheet">
+
+  <head>
+
+    <link href="http://s3.amazonaws.com/codecademy-content/courses/ltp/css/shift.css" rel="stylesheet">
     <link rel="stylesheet" href="http://s3.amazonaws.com/codecademy-content/courses/ltp/css/bootstrap.css">
+    <link rel="stylesheet" href="main.css">
+    
+  </head>
 
-</head>
-<style>
+  <body>
+    <div class="nav">
+      <div class="container">
+        <ul class = "pull-left">
+          <li><a href="index_hm.html" target="content">HEAT MAP</a></li>
+          <li><a href="zonemap.html" target ="content">ZONE MAP</a></li>
+          <li><a href="match.html" target ="content">MATCH VIEW</a></li>
+        </ul>
 
-    .axis text {
-        font: 10px sans-serif;
-    }
+         <ul class="pull-right">
+            <li> <a href="http://d3js.org/">About d3js</a> </li>
+            <li> <a href="http://blog.dota2.com/?l=english">About Dota 2</a> </li>
+              
+         </ul>
+      </div>
+    </div>
 
-    .axis path,
-    .axis line {
-        fill: none;
-        stroke: #000;
-    }
-
-    iframe {
-        position: relative;
-        float: left;
-    }
-
-</style>
-<body>
-    <iframe width="45%" height="1024px" src="HM.html"></iframe>
-    <iframe width="45%" height="1024px" src="HM.html"></iframe>
-</body>
+    <div class="jumbotron">
+      <div class="container">
+        <h1>Visualizing Player Behavior in DotA 2 </h1>
+        <p>Data Visualization - Assignment 1</p>
+        <p></p>
+      </div>
+    </div> 
+    
+ <iframe name="content" width="100%" height="1024px" ></iframe>
+	
+  </body>
 </html>
