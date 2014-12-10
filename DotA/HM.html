@@ -122,7 +122,7 @@
         if (dataset) {
             dataset.remove();
         }
-        d3.csv("HM_"+tier+"_"+filter+".csv", function(error, data){
+        d3.csv("data/HM_"+tier+"_"+filter+".csv", function(error, data){
             //console.log(data);
             data.forEach(function(d){
             //     //Sometimes the numbers are returned as strings, these lines transform those strings are transformed into numbers
