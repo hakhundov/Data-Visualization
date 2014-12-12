@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DotA HeatMap</title>
+    <meta charset="utf-8">
+  <!--  <link href=bootstrap-3.1.1-dist/css/bootstrap.css rel=stylesheet media="screen">
+  -->
+</head>
+<style>
+
+    .axis text {
+        font: 10px sans-serif;
+    }
+
+    .axis path,
+    .axis line {
+        fill: none;
+        stroke: #000;
+    }
+
+</style>
+
+
+<div class="row">
+    <div class="col-md-4" id ="svgArea"></div>
+ </div>
+
+
+<body>
+
+<script src=D3/D3.js></script>
+
+
+<script>
+    // Creates your margin and size of your canvas
+    var margin = {top: 30, right: 30, bottom: 30, left: 30};
+    var width = 600,
+            height = 600;
+
+
+    // In order for the margins to work we need to append a "g" (graphic) element to our svg
+    var svg = d3.select("#svgArea").append("svg")
+            .attr("width", width+50)
+            .attr("height", height+150)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    var xS = d3.scale.linear().range([0, width - margin.right]);
+    var yS = d3.scale.linear().range([height - margin.bottom, 0]);
+
+
+    var xAxis = d3.svg.axis()
+            .scale(xS)
+            .orient("bottom");
+
+    var yAxis = d3.svg.axis()
+            .scale(yS)
+            .orient("left")
+            //.ticks(10);
+
+    var color = d3.scale.ordinal().range([  "#fff5eb","#fee6ce", "#fdd0a2",
+                                            "#fdae6b","#fd8d3c", "#f16913",
+                                            "#d94801", "#a63603", "#7f2704" ]);
+
+    d3.csv("data/trace.csv", function(error, data){
+        //console.log(data);
+        data.forEach(function(d){
+        //     //Sometimes the numbers are returned as strings, these lines transform those strings are transformed into numbers
+            d.x = +d.x;
+            d.y = +d.y;
+         });
+
+        console.log(data.length)
+   
+
+        xS.domain(d3.extent(data, function(d){return d.x;})).nice();
+        yS.domain(d3.extent(data, function(d){return d.y;}))   
+ 
+    var DT = [];
+        for (i = 0; i < data.length; i++) { 
+                
+            DT[0] = data[i];
+            // console.log(DT);
+            // console.log(data[1]);
+             //console.log(data);
+            circle = svg.append("g")
+                .selectAll("rect")
+                .data(DT)
+                .enter()
+                .append("rect")
+                .transition(10000)
+                .delay(5000)
+                .attr("x", function(d){console.log("I am here");  return xS(d.x)})
+                .attr("y", function(d){ return yS(d.y)})
+                .attr("width",   6 ) 
+                .attr("height",  6 )
+                .style("fill",   function(d){ return "red" }) 
+        .transition()
+           .duration(200)
+           .delay(6000)
+         //  .ease(Math.sqrt)
+           // .attr("r", 100)
+           // .style("stroke-opacity", 1e-6)
+          // .each("end", function() { d3.select(this)
+                                     //  .transition(2500)
+                                      // .style("opacity", "0")
+                            //       })
+            .remove();
+
+    
+          }
+
+       
+
+                //.on("mouseover", function(){d3.select(this).style("fill", "green")})
+                ////.on("mouseout", function(){d3.select(this).style("fill",      function(d){ return color(d.species)}         )});
+
+       
+        // we add the axis
+        svg.append("g")
+                .attr("class", "x axis")
+                .attr("transform", "translate(0," + (height - margin.bottom) + ")")
+                .call(xAxis);
+
+        svg.append("g")
+                .attr("class", "y axis")
+                .call(yAxis);
+
+    });
+
+
+
+
+</script>
+
+
+
+</body>
+</html>
