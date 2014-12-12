@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DotA HeatMap</title>
+    <meta charset="utf-8">
+  <!--  <link href=bootstrap-3.1.1-dist/css/bootstrap.css rel=stylesheet media="screen">
+  -->
+
+    <link href="http://s3.amazonaws.com/codecademy-content/courses/ltp/css/shift.css" rel="stylesheet">
+    <link rel="stylesheet" href="http://s3.amazonaws.com/codecademy-content/courses/ltp/css/bootstrap.css">
+
+
+</head>
+<style>
+
+    .axis text {
+        font: 10px sans-serif;
+    }
+
+    .axis path,
+    .axis line {
+        fill: none;
+        stroke: #000;
+    }
+
+</style>
+
+<body>
+
+<form id="filterForm">
+<div class="nav">
+      <div class="container">
+    <fieldset>
+    <table class="table table-striped">
+        <tr>
+            <td>
+                <select id = "match">
+                    <option value="648283764">Match #1</option>
+                    <option value="569649581">Match #2</option>
+                </select>
+            </td>
+            <td>
+                <label>Match</label>
+            </td>
+        </tr>
+        <tr><td><input id="p0" value="0" type="checkbox" checked="true"/></td><td><label id="lp0">Player #1</label></td></tr>
+        <tr><td><input id="p1" value="1" type="checkbox" checked="true"/></td><td><label id="lp1">Player #2</label></td></tr>
+        <tr><td><input id="p2" value="2" type="checkbox" checked="true"/></td><td><label id="lp2">Player #3</label></td></tr>
+        <tr><td><input id="p3" value="3" type="checkbox" checked="true"/></td><td><label id="lp3">Player #4</label></td></tr>
+        <tr><td><input id="p4" value="4" type="checkbox" checked="true"/></td><td><label id="lp4">Player #5</label></td></tr>
+        <tr><td><input id="p5" value="5" type="checkbox" checked="true"/></td><td><label id="lp5">Player #6</label></td></tr>
+        <tr><td><input id="p6" value="6" type="checkbox" checked="true"/></td><td><label id="lp6">Player #7</label></td></tr>
+        <tr><td><input id="p7" value="7" type="checkbox" checked="true"/></td><td><label id="lp7">Player #8</label></td></tr>
+        <tr><td><input id="p8" value="8" type="checkbox" checked="true"/></td><td><label id="lp8">Player #9</label></td></tr>
+        <tr><td><input id="p9" value="9" type="checkbox" checked="true"/></td><td><label id="lp9">Player #10</label></td></tr>
+        <tr><td><input id="timeMin" value="0" type="range"/></td><td><label>Start time</label></td></tr>
+        <tr><td><input id="timeMax" type="range"/></td><td><label>End time</label></td></tr>
+        <tr><td><input id="animate" type="checkbox"/></td><td><label>Animate</label></td></tr>
+    </table>
+    </fieldset>
+
+   </div>
+   </div> 
+
+</form>
+<div class="row">
+    <div class="col-md-4" id ="svgArea"></div>
+</div>
+
+<script src="D3/D3.js"></script>
+
+
+<script>
+    // Creates your margin and size of your canvas
+    var margin = {top: 30, right: 30, bottom: 30, left: 30};
+    var width = 600,
+            height = 600;
+
+
+    // In order for the margins to work we need to append a "g" (graphic) element to our svg
+    var svg = d3.select("#svgArea").append("svg")
+            .attr("width", width+50)
+            .attr("height", height+150)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    var xS = d3.scale.linear().range([0, width - margin.right]);
+    var yS = d3.scale.linear().range([height - margin.bottom, 0]);
+
+
+    var xAxis = d3.svg.axis()
+            .scale(xS)
+            .orient("bottom");
+
+    var yAxis = d3.svg.axis()
+            .scale(yS)
+            .orient("left")
+            //.ticks(10);
+
+    var color = d3.scale.ordinal().range(['rgb(166,206,227)','rgb(31,120,180)','rgb(178,223,138)','rgb(51,160,44)','rgb(251,154,153)','rgb(227,26,28)','rgb(253,191,111)','rgb(255,127,0)','rgb(202,178,214)','rgb(106,61,154)','rgb(255,255,153)','rgb(177,89,40)']);
+
+        // we add the axis
+        svg.append("g")
+                .attr("class", "x axis")
+                .attr("transform", "translate(0," + (height - margin.bottom) + ")")
+                .call(xAxis);
+
+        svg.append("g")
+                .attr("class", "y axis")
+                .call(yAxis);
+
+    var container = svg.append("g"),
+        dataset,
+        trace = {};
+
+    // Here we will build a map of player names to unique integer indices, used to filter
+    var playerMap = {},
+        players = 0;
+
+    var prevMatch = 0;  // Stores previous loaded match ID to prevent unneeded reloading of the map.
+
+    var maxTime = 0;
+
+    // Update the map with a given match ID, but only if the match ID is different than the last call.
+    // Executes a given callback function afterwards, regardless if the map was updated.
+    var updateMap = function (match, cb) {
+        if (prevMatch == match) {
+            if (cb != undefined) {
+                cb();
+            }
+            return;
+        }
+        prevMatch = match;
+
+        if (dataset) {
+            // clear old dataset, throwing away all nodes
+            dataset.remove();
+        }
+        // Clear playermap
+        playerMap = {};
+        players = 0;
+
+        // Label nodes which we will update with the player name
+        var playerNodes = document.getElementById('players');
+        d3.csv("data/match_"+match+".csv", function (error, data){
+            data.forEach(function(d) {
+                d.t = parseInt(d.t);
+                d.x = parseInt(d.x);
+                d.y = parseInt(d.y);
+                d.team = parseInt(d.team);
+
+                // Check if a player name was encountered before. 
+                // Otherwise we will add it to the map and add the player name to the label.
+                if (playerMap[d.player] == undefined) {
+                    document.getElementById('lp' + players).innerText = d.player;
+                    playerMap[d.player] = players++;
+                }
+
+                if (d.t > maxTime) {
+                    maxTime = d.t;
+                }
+                if (trace[playerMap[d.player]] == undefined) {
+                    trace[playerMap[d.player]] = [];
+                }
+                trace[playerMap[d.player]][d.t] = {x: d.x, y: d.y};
+             });
+
+
+            document.getElementById('timeMax').max = maxTime;
+            document.getElementById('timeMin').max = maxTime;
+            document.getElementById('timeMax').value = maxTime;
+
+
+            xS.domain(d3.extent(data, function(d){return d.x;})).nice();
+            yS.domain(d3.extent(data, function(d){return d.y;}));
+            console.log(trace, playerMap);
+
+            dataset = container.selectAll("rect")
+                    .data([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+                    .enter()
+                    .append("rect")
+                    .attr("x",   function (d){return xS(trace[d][0].x);})
+                    .attr("y",  function (d){return yS(trace[d][0].y);})
+                    .attr("width",   function (d){return 6;})
+                    .attr("height",  function (d){return 6;})
+                    .style("fill",   function(d){ return color(d) });
+
+            if (cb != undefined) {
+                cb();
+            }
+        });
+
+    }
+
+    // Filter players given a filter function of type
+    // filter: svgNode -> boolean
+    var updateFilters = function (filter, t) {
+        var rect = dataset[0];
+        var i;
+        //console.log('step', t);
+        for (i = 0; i < rect.length; i += 1) {
+            if (trace[i][t] == undefined) {
+                continue;
+            }
+            rect[i].setAttribute('x',xS(trace[i][t].x));
+            rect[i].setAttribute('y', yS(trace[i][t].y));
+            if (filter(rect[i])) {
+                rect[i].style.display = 'inline';
+            } else {
+                rect[i].style.display = 'none';
+            }
+        }
+
+    }
+
+    var UPDATEDELAY = 10;
+
+    updateMap('648283764');
+    var form = document.getElementById('filterForm');
+    form.onchange = function () {
+        var playerFilter = []; // Which player index is checked
+        var i;
+        // Update the map with the selected match, and on callback we will filter.
+        updateMap(form.match.value, function () {
+            // Now for every checkbox add to the players list if it's checked or not.
+            for(i = 0; i < 10; i +=1) {
+                var node = document.getElementById('p' + i);
+                playerFilter.push(node.checked);
+            }
+
+            var min = parseInt(form.timeMin.value);
+            var max = parseInt(form.timeMax.value);
+            var time = [Math.min(min, max), Math.max(min, max)];
+
+            // PlayerMap is a function from player name to a unique player-index,
+            // we encoded the player name in the data-player attribute of every node,
+            // playerFilter is a function from player-index to true/false
+            // and the filter should be node -> true/false...
+            // So our filter is forEach node: playerFilter[playerMap[node[data-player]]]
+
+            if (document.getElementById('animate').checked) {
+                var t = time[0];
+                var func = function () {
+                    updateFilters(function (n) {
+                        return true; //playerFilter[playerMap[n.getAttribute('data-player')]];
+                    }, t);
+                    t += 1;
+                    if (document.getElementById('animate').checked && t < time[1]) {
+                        setTimeout(func, UPDATEDELAY);
+                    }
+                }
+
+                setTimeout(func, UPDATEDELAY);
+
+            } else {
+                updateFilters(function (n) {
+                        return true;//playerFilter[playerMap[n.getAttribute('data-player')]];
+                }, 0);
+            }
+        });
+    }
+</script>
+</body>
+</html>
