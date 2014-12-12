@@ -55,6 +55,7 @@
         <tr><td><input id="p9" value="9" type="checkbox" checked="true"/></td><td><label id="lp9">Player #10</label></td></tr>
         <tr><td><input id="timeMin" value="0" type="range"/></td><td><label>Start time</label></td></tr>
         <tr><td><input id="timeMax" type="range"/></td><td><label>End time</label></td></tr>
+        <tr><td><input id="animate" type="checkbox"/></td><td><label>Animate</label></td></tr>
     </table>
     </fieldset>
 
@@ -218,18 +219,35 @@
             var min = parseInt(form.timeMin.value);
             var max = parseInt(form.timeMax.value);
             var time = [Math.min(min, max), Math.max(min, max)];
-            console.log(time);
 
             // PlayerMap is a function from player name to a unique player-index,
             // we encoded the player name in the data-player attribute of every node,
             // playerFilter is a function from player-index to true/false
             // and the filter should be node -> true/false...
             // So our filter is forEach node: playerFilter[playerMap[node[data-player]]]
-            updateFilters(function (n) {
-                return n.getAttribute('data-time') > time[0]
-                    && n.getAttribute('data-time') < time[1]
-                    && playerFilter[playerMap[n.getAttribute('data-player')]];
-            });
+
+            if (document.getElementById('animate').checked) {
+                var t = time[0];
+                var func = function () {
+                    updateFilters(function (n) {
+                        return n.getAttribute('data-time') == t
+                            && playerFilter[playerMap[n.getAttribute('data-player')]];
+                    });
+                    t += 1;
+                    if (document.getElementById('animate').checked && t < time[1]) {
+                        setTimeout(func, 100);
+                    }
+                }
+
+                setTimeout(func, 100);
+
+            } else {
+                updateFilters(function (n) {
+                    return n.getAttribute('data-time') > time[0]
+                        && n.getAttribute('data-time') < time[1]
+                        && playerFilter[playerMap[n.getAttribute('data-player')]];
+                });
+            }
         });
     }
 </script>
