@@ -43,16 +43,18 @@
                 <label>Match</label>
             </td>
         </tr>
-        <tr><td><input id="p0" value="0" type="checkbox" checked="true"></input></td><td><label id="lp0">Player #1</label></td></tr>
-        <tr><td><input id="p1" value="1" type="checkbox" checked="true"></input></td><td><label id="lp1">Player #2</label></td></tr>
-        <tr><td><input id="p2" value="2" type="checkbox" checked="true"></input></td><td><label id="lp2">Player #3</label></td></tr>
-        <tr><td><input id="p3" value="3" type="checkbox" checked="true"></input></td><td><label id="lp3">Player #4</label></td></tr>
-        <tr><td><input id="p4" value="4" type="checkbox" checked="true"></input></td><td><label id="lp4">Player #5</label></td></tr>
-        <tr><td><input id="p5" value="5" type="checkbox" checked="true"></input></td><td><label id="lp5">Player #6</label></td></tr>
-        <tr><td><input id="p6" value="6" type="checkbox" checked="true"></input></td><td><label id="lp6">Player #7</label></td></tr>
-        <tr><td><input id="p7" value="7" type="checkbox" checked="true"></input></td><td><label id="lp7">Player #8</label></td></tr>
-        <tr><td><input id="p8" value="8" type="checkbox" checked="true"></input></td><td><label id="lp8">Player #9</label></td></tr>
-        <tr><td><input id="p9" value="9" type="checkbox" checked="true"></input></td><td><label id="lp9">Player #10</label></td></tr>
+        <tr><td><input id="p0" value="0" type="checkbox" checked="true"/></td><td><label id="lp0">Player #1</label></td></tr>
+        <tr><td><input id="p1" value="1" type="checkbox" checked="true"/></td><td><label id="lp1">Player #2</label></td></tr>
+        <tr><td><input id="p2" value="2" type="checkbox" checked="true"/></td><td><label id="lp2">Player #3</label></td></tr>
+        <tr><td><input id="p3" value="3" type="checkbox" checked="true"/></td><td><label id="lp3">Player #4</label></td></tr>
+        <tr><td><input id="p4" value="4" type="checkbox" checked="true"/></td><td><label id="lp4">Player #5</label></td></tr>
+        <tr><td><input id="p5" value="5" type="checkbox" checked="true"/></td><td><label id="lp5">Player #6</label></td></tr>
+        <tr><td><input id="p6" value="6" type="checkbox" checked="true"/></td><td><label id="lp6">Player #7</label></td></tr>
+        <tr><td><input id="p7" value="7" type="checkbox" checked="true"/></td><td><label id="lp7">Player #8</label></td></tr>
+        <tr><td><input id="p8" value="8" type="checkbox" checked="true"/></td><td><label id="lp8">Player #9</label></td></tr>
+        <tr><td><input id="p9" value="9" type="checkbox" checked="true"/></td><td><label id="lp9">Player #10</label></td></tr>
+        <tr><td><input id="timeMin" value="0" type="range"/></td><td><label>Start time</label></td></tr>
+        <tr><td><input id="timeMax" type="range"/></td><td><label>End time</label></td></tr>
     </table>
     </fieldset>
 
@@ -115,6 +117,8 @@
 
     var prevMatch = 0;  // Stores previous loaded match ID to prevent unneeded reloading of the map.
 
+    var maxTime = 0;
+
     // Update the map with a given match ID, but only if the match ID is different than the last call.
     // Executes a given callback function afterwards, regardless if the map was updated.
     var updateMap = function (match, cb) {
@@ -149,7 +153,16 @@
                     document.getElementById('lp' + players).innerText = d.player;
                     playerMap[d.player] = players++;
                 }
+
+                if (d.t > maxTime) {
+                    maxTime = d.t;
+                }
              });
+
+
+            document.getElementById('timeMax').max = maxTime;
+            document.getElementById('timeMin').max = maxTime;
+            document.getElementById('timeMax').value = maxTime;
 
 
             xS.domain(d3.extent(data, function(d){return d.x;})).nice();
@@ -159,7 +172,8 @@
                     .data(data)
                     .enter()
                     .append("rect")
-                    .attr("data-player", function (d) {return d.player}) // Also encode player name for filtering purposes
+                    .attr("data-player", function (d) {return d.player}) // Also encode player name and time for filtering purposes
+                    .attr("data-time", function (d) {return d.t})
                     .attr("x", function (d){return xS(d.x)})
                     .attr("y", function (d){return yS(d.y)})
                     .attr("width",   function (d){return 6;})
@@ -195,12 +209,16 @@
         var i;
         // Update the map with the selected match, and on callback we will filter.
         updateMap(form.match.value, function () {
-
             // Now for every checkbox add to the players list if it's checked or not.
             for(i = 0; i < 10; i +=1) {
                 var node = document.getElementById('p' + i);
                 playerFilter.push(node.checked);
             }
+
+            var min = parseInt(form.timeMin.value);
+            var max = parseInt(form.timeMax.value);
+            var time = [Math.min(min, max), Math.max(min, max)];
+            console.log(time);
 
             // PlayerMap is a function from player name to a unique player-index,
             // we encoded the player name in the data-player attribute of every node,
@@ -208,7 +226,9 @@
             // and the filter should be node -> true/false...
             // So our filter is forEach node: playerFilter[playerMap[node[data-player]]]
             updateFilters(function (n) {
-                return playerFilter[playerMap[n.getAttribute('data-player')]];
+                return n.getAttribute('data-time') > time[0]
+                    && n.getAttribute('data-time') < time[1]
+                    && playerFilter[playerMap[n.getAttribute('data-player')]];
             });
         });
     }
