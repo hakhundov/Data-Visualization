@@ -1,2 +1,50 @@
 \section{Zone Map}
+The dataset also contained a csv file describing for every point in the map a label to identify that part of the map with. This leads to the creation of an obvious visualization of the map where every zone has been given a unique catagorical color.
 
+\begin{lstlisting}[language=JavaScript]
+// Points to a DOM node that we will manipulate as a tooltip displayer
+var tooltip;
+// Maps raw map coordinates into normalized map coordinates for our screen
+var xS = function (var rx);
+var yS = function (var ry);
+// A function that maps every label id to a unique color
+var color = function (var value);
+// A list that will store our zone labels
+var labels = [];
+// Read our CSV data file containing labels per points
+d3.csv("data/labels.csv", function(error, data) {
+    data.forEach(function(d){
+        var index, label;
+        // Convert the strings to integers
+        d.x = parseInt(d.x);
+        d.y = parseInt(d.y);
+        // Extract the label from the csv
+        // search it's index in the label list
+        label = d['Section Label '];
+        index = labels.indexOf(label);
+        if (index == -1) {
+        	// It if doesn't exist there yet, we'll add it ourselves
+            index = labels.length;
+            labels.push(label);
+        }
+        // Store the index of this label in the dataset
+        d.label = index;
+    });
+    // For every point in the dataset, add a rectangle to our SVG
+    dataset = container.selectAll("rect")
+        .data(data)
+        .enter()
+        .append("rect")
+        .attr("x", function(d){ return xS(d.x)})
+        .attr("y", function(d){ return yS(d.y)})
+        .attr("width",   6 ) 
+        .attr("height",  6 )
+        .style("fill",   function(d){ return color(d.label) })
+        .on('mouseover', function (e) {
+        	// Also add a mouse hover handler that will display the label value
+            tooltip.style.left = xS(e.x) + 'px';
+            tooltip.style.top = yS(e.y) + 'px';
+            tooltip.innerText = labels[e.label] + '(' + e.label + ')';
+        });
+});
+\end{lstlisting}
