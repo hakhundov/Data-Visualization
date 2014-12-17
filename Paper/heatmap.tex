@@ -1,5 +1,40 @@
 \section{Heatmap}
+One of the most easily created and useful spatial data visualizations is a \emph{heatmap}. In our DotA2 dataset we have several matches worth of player coordinates over time. Even more interesting, we have matches from several tier brackets. Once we have a heatmap of all data, it would also be interesting to create a heatmap per tier, to compare the overall map usage per tier. After that several filters were applied to these heatmaps.
 
-\subsection{Preprocessing}
+When we tried to parse the dataset in the D3 library we encountered a severe problem however: this library is not suited for datasets of this scale. To solve this issue we chose to preprocess our dataset, transforming it into a heatmap dataset usable in D3 using a different platform first. Our second step was to filter only a certain tier in this transformation. The third step was applying several visual filters to these heatmaps.
+
+\subsection{Preprocessing [TODO]}
+TODO
+
+\subsection{Filtering [TODO]}
+TODO
 
 \subsection{Rendering the heatmap in D3}
+Since our heatmap dataset consisted of a csv with for every point a triple of the following format: $(x, y, v)$ where x and y encoded the location of this point, and v the count of this position being entered in the dataset by a player, loading the heatmap in D3 was trivial.
+
+\begin{lstlisting}[language=JavaScript]
+// Maps raw map coordinates into normalized map coordinates for our screen
+var xS = function (var rx);
+var yS = function (var ry);
+// Converts a raw value into a normalized heatmap color
+var color = function (var value);
+// Use the d3 CSV viewer on our heatmap dataset, load in data
+d3.csv("data/HM_"+tier+"_"+filter+".csv", function (error, data) {
+	// Convert every value (loaded as string) into integers
+	data.forEach(function(d){
+	    d.x = parseInt(d.x);
+	    d.y = parseInt(d.y);
+	    d.v = parseInt(d.v);
+	});
+	// For every point, add a rectangle to our SVG element
+	dataset = container.selectAll("rect")
+	    .data(data)
+	    .enter()
+	    .append("rect")
+	    .attr("x", function (d) { return xS(d.x)})
+	    .attr("y", function (d) { return yS(d.y)})
+	    .attr("width",   6 ) 
+	    .attr("height",  6 )
+	    .style("fill",   function (d) { return color(d.v) });
+});
+\end{lstlisting}
