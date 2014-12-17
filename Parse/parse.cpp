@@ -5,7 +5,7 @@
 #include <string>
 
 #define BUFLEN 255
-#define PLEN 32
+#define PLEN 64
 
 #define MAP_W 256
 #define MAP_H 256
