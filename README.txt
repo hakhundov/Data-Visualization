@@ -4,7 +4,8 @@ Instructions on setting up the webpages
 1. Open index.html
 
 Note: 
-     Make sure that a simple web server is running.
+     Make sure that a simple web server is running in the DotA folder.
+     Ensure that the data (.csv files) are in the data directory, relative from the root (DotA).
      If you're using a Windows machine that has Python 2.7 installed, simply run the 'RunServer.bat' and then click 'Open Server'
 
 2. In the navigation pane you will see several tabs. Those are pulled to the left side are the visualizations that could be easily seen by simply clicking on them.
