@@ -178,7 +178,6 @@
 
             xS.domain(d3.extent(data, function(d){return d.x;})).nice();
             yS.domain(d3.extent(data, function(d){return d.y;}));
-            console.log(trace, playerMap);
 
             dataset = container.selectAll("rect")
                     .data([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
