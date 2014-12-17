@@ -12,8 +12,14 @@ Scripts \textit{MATLAB 1} and \textit{MATLAB 2} that can also be viewed from ind
 
 Note that the scripts are not fully automated and hence need to be reconfigured to obtain the necessary information. For the purpose of this assignment this was unnecessary, however, the entire process can be written in such way so that the extraction and all the necessary pre-processings are done in one easy step.
 
-\subsection{Filtering [TODO]}
-TODO
+\subsection{Filtering}
+We further experimented with the heatmaps that were generated in the above step by applying several image processing algorithms such as a 4x4 Median Filter and a Canny Edge Algorithm in Matlab which gave very interesting results.
+
+The \textit{4x4 Median Filtered} gives a smoothed out heatmap where the 'heat' regions are in blocks of areas.
+
+On the other hand the \textit{Canny Edge Algorithm} detects the edges in the image, and by inspecting the image we can see that the result is sort of a road map of the game.
+
+In order to inspect the visualizations please navigate to \textit{index.html}
 
 \subsection{Rendering the heatmap in D3}
 Since our heatmap dataset consisted of a csv with for every point a triple of the following format: $(x, y, v)$ where x and y encoded the location of this point, and v the count of this position being entered in the dataset by a player, loading the heatmap in D3 was trivial.
