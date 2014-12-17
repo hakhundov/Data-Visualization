@@ -1,7 +1,104 @@
 \section{Match Replaying}
+Since we have temporal spatial data (for every time moment, we know the position of each player), it is also interesting to add the temporial part to our visualisation. In other words, we would like, per match, to view player positions given in a certain time domain. First we will display all player positions in this time domain, later we will animate these positions over time. At this point we encountered an issue that D3 is not very well suited for this visualisation and also present an alternative visualization without using D3 (except for the loading of our dataset). The first step is to filter our dataset per match.
 
-\subsection{Preproccessing and Filtering}
+\subsection{Preprocessing and Filtering}
+Once again we are limited by the huge size of our dataset and have to preprocess and filter out data in a different platform. This time we opted to make a C++ preprocess tool to filter out a given match. We will not go into much detail here because the focus of this research is not parsing, filtering and generating CSV's, but visualizing the results. We parse the csv file to a very simple datastructure containing only the relevant information $(matchid, tsync, x, y, teamid, playername)$, storing only those where $matchid$ matches a given id.
+
+\begin{lstlisting}[language=C++]
+#define TEAM_DIRE		0
+#define TEAM_RADIANT	1
+
+typedef unsigned int uint;
+typedef struct entry_t_ {
+	uint matchid;
+	uint tsync;
+	uint x;
+	uint y;
+	char team;
+	char player[PLEN];
+} entry_t;
+\end{lstlisting}
+
+We then write this back in a new csv, only leaving out the matchid (because this is already known), giving us a new csv with every entry of the following form: $(tsync, x, y, teamid, playername)$.
 
 \subsection{Displaying Replays in D3}
+Now we have per match a csv containing per player spatial and temporal data. This is easily loaded in D3, where we can filter even more information on request. We load the dataset in the already known method, but this time keep track of a player map where we map every player name to a unique identifier. We will use this information to filter out players on request later. We also keep track of the maximum time in the dataset, later used to decide the time domain, for our time range filter.
 
-\subsection{A Quicker Implementation in plain JavaScript}
+\begin{lstlisting}[language=JavaScript]
+// Maps raw map coordinates into normalized map coordinates for our screen
+var xS = function (var rx);
+var yS = function (var ry);
+// A function that maps every label id to a unique color
+var color = function (var value);
+// Keep track of the maximum time
+var maxTime = 0;
+
+d3.csv("data/match_"+match+".csv", function (error, data) {
+    data.forEach(function (d) {
+        d.t = parseInt(d.t);
+        d.x = parseInt(d.x);
+        d.y = parseInt(d.y);
+        d.team = parseInt(d.team);
+
+        // Check if a player name was encountered before. 
+        // Otherwise we will add it to the map and add the player name to the label.
+        if (playerMap[d.player] == undefined) {
+            document.getElementById('lp' + players).innerText = d.player;
+            playerMap[d.player] = players++;
+        }
+
+        // Keep track of our maximum time.
+        if (d.t > maxTime) {
+            maxTime = d.t;
+        }
+     });
+
+    // For every point in our dataset, add a rectangle to the SVG element.
+    // We also encode the player id and time of this point in the element.
+    dataset = container.selectAll("rect")
+        .data(data)
+        .enter()
+        .append("rect")
+        .attr("data-player", function (d) {return playerMap[d.player]})
+        .attr("data-time", function (d) {return d.t})
+        .attr("x", function (d) {return xS(d.x)})
+        .attr("y", function (d) {return yS(d.y)})
+        .attr("width",   function (d) {return 6;})
+        .attr("height",  function (d) {return 6;})
+        .style("fill",   function (d) { return color(playerMap[d.player]) });
+\end{lstlisting}
+
+Now we have all points loaded in our SVG element. We can now apply filters on these points to dynamically show or hide them. We added a very general filter method which accepts a predicate of the form $svgNode \rightarrow boolean$ and applies it over every node. The node will be shown or hidden depending on the result.
+
+\begin{lstlisting}[language=JavaScript]
+var updateFilters = function (filter) {
+        var rect = dataset[0];
+        var i;
+        for (i = 0; i < rect.length; i += 1) {
+            if (filter(rect[i])) {
+                rect[i].style.display = 'inline';
+            } else {
+                rect[i].style.display = 'none';
+            }
+        }
+    }
+\end{lstlisting}
+
+Our example implementation has a checkbox for every player to filter his or her movements out of the set. We also added two sliders to select a time range to filter out. The domain of both sliders range from zero to $maxTime$. Now it is only a
+matter of reading out the values of these checkboxes (we store them in $playerFilter$ which is now an array of booleans), and the values from our time range sliers (we store them as $time = [minTime, maxTime]$). Remember that we encoded the time and player id in every SVG node, thus we can filter with the following predicate:
+\begin{lstlisting}[language=JavaScript]
+function (n) {
+    return n.getAttribute('data-time') > time[0]
+        && n.getAttribute('data-time') < time[1]
+        && playerFilter[n.getAttribute('data-player')];
+};
+\end{lstlisting}
+
+We can easily expand this to animate the players locations, effectively rendering a replay of the game, by looping a time filter variable from $time[0]$ to $time[1]$.
+
+\subsection{Performance Issues}
+Here we really see the weakness of D3 for this kind of visualization: since D3 iterates over the entire dataset, it is a bit more difficult to filter out and/or add elements later dynamically. We now have every point loaded in our SVG element, and we have $time * players$ amount of points. A typical match contains ten players and lasts about 45 minutes, meaning we have typically $10 * 45 * 60 = 27,000$ SVG DOM nodes in our page, which is quite stressful on most browsers to render. Furthermore, when we will dynamically filter out relative information, for every time-step we have to iterate over every node and manipulate it (and DOM manipulation is considered very slow). 
+
+This is acceptable for the not animated filter which processes the dataset only once, and on our machines still sufficiently fast to provide (almost up to ten times faster than real-time) playback. However this was still fairly taxing on our machine for a relatively simple task. 
+
+For the sake of completeness we decided to include another implementation that used D3 only to load the dataset and add ten SVG nodes (one per player). We built \emph{traces} of each player, basically an array per player consisting of $(x, y)$ positions indexed by time. The rest of the manipulation was done in plain JavaScript, simply by editing the filter to move the relevant nodes to their new locations, read from the players' trace.
