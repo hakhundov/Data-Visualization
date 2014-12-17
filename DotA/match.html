@@ -165,7 +165,6 @@
             document.getElementById('timeMin').max = maxTime;
             document.getElementById('timeMax').value = maxTime;
 
-
             xS.domain(d3.extent(data, function(d){return d.x;})).nice();
             yS.domain(d3.extent(data, function(d){return d.y;}));
 
@@ -173,7 +172,7 @@
                     .data(data)
                     .enter()
                     .append("rect")
-                    .attr("data-player", function (d) {return d.player}) // Also encode player name and time for filtering purposes
+                    .attr("data-player", function (d) {return playerMap[d.player]}) // Also encode player id and time for filtering purposes
                     .attr("data-time", function (d) {return d.t})
                     .attr("x", function (d){return xS(d.x)})
                     .attr("y", function (d){return yS(d.y)})
@@ -200,7 +199,6 @@
                 rect[i].style.display = 'none';
             }
         }
-
     }
 
     updateMap('648283764');
@@ -231,7 +229,7 @@
                 var func = function () {
                     updateFilters(function (n) {
                         return n.getAttribute('data-time') == t
-                            && playerFilter[playerMap[n.getAttribute('data-player')]];
+                            && playerFilter[n.getAttribute('data-player')];
                     });
                     t += 1;
                     if (document.getElementById('animate').checked && t < time[1]) {
@@ -245,7 +243,7 @@
                 updateFilters(function (n) {
                     return n.getAttribute('data-time') > time[0]
                         && n.getAttribute('data-time') < time[1]
-                        && playerFilter[playerMap[n.getAttribute('data-player')]];
+                        && playerFilter[n.getAttribute('data-player')];
                 });
             }
         });
